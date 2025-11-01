@@ -1,4 +1,4 @@
-name: Auto Sync
+name: Sync NELC Website
 
 on:
   schedule:
@@ -8,60 +8,18 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      - name: Backup workflow files
+      - name: Sync Fork
         run: |
-          mkdir -p /tmp/workflow_backup
-          cp -r .github/workflows/* /tmp/workflow_backup/ || true
-          echo "Workflow files backed up"
-
-      - name: Add upstream and sync
-        run: |
-          git config user.name "Auto Sync Bot"
-          git config user.email "auto-sync@users.noreply.github.com"
-          
-          git remote add upstream https://github.com/NELC-Official/NELC-Official.github.io.git || true
-          
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote add upstream https://github.com/NELC-Official/NELC-Official.github.io.git
           git fetch upstream
-          
-          if git merge-base --is-ancestor upstream/main main; then
-            echo "✅ Already up to date - no sync needed"
-            exit 0
-          fi
-          
-          echo "🔄 Updates detected, starting sync..."
-          
-          git merge upstream/main --no-edit --strategy-option ours
-          echo "🔄 Merge completed"
-
-      - name: Restore workflow files
-        run: |
-          if [ -d "/tmp/workflow_backup" ]; then
-            mkdir -p .github/workflows
-            cp -r /tmp/workflow_backup/* .github/workflows/ || true
-            echo "✅ Workflow files restored"
-          else
-            echo "⚠️ No backup found, skipping restore"
-          fi
-
-      - name: Commit and push changes
-        run: |
-          if git diff --quiet && git diff --staged --quiet; then
-            echo "✅ No changes to commit"
-          else
-            git add .
-            git commit -m "Auto sync with upstream + workflow protection [$(date +'%Y-%m-%d %H:%M:%S')]"
-            git push origin main
-            echo "✅ Changes pushed successfully"
-          fi
-
-      - name: Cleanup
-        run: |
-          # 清理备份文件
-          rm -rf /tmp/workflow_backup
-          echo "🧹 Cleanup completed"
+          git checkout main
+          git merge upstream/main --allow-unrelated-histories
+          git push origin main
