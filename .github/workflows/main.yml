@@ -1,9 +1,8 @@
-name: Auto Sync with Workflow Protection
+name: Auto Sync
 
 on:
   schedule:
-    - cron: "*/6 * * * *"  # 每5分钟检查一次
-  workflow_dispatch:  # 允许手动触发
+    - cron: "*/6 * * * *"
 
 jobs:
   sync:
